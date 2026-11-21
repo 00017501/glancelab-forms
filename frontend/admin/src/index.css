@@ -1,0 +1,254 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/hanken-grotesk";
+@import "@fontsource-variable/noto-sans-mono";
+
+/* The shell (top bar, study bar, login) is always dark; `dark:` styles apply inside it in both themes. */
+@custom-variant dark (&:is(.dark *, .shell *));
+
+@theme inline {
+  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Noto Sans Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand: the violet-to-indigo pair carries primary actions; mint means live or done. */
+  --color-violet: var(--violet);
+  --color-indigo: var(--indigo);
+  --color-indigo-soft: var(--indigo-soft);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-amber: var(--amber);
+  --color-amber-ink: var(--amber-ink);
+  /* Untinted grey behind every ad image, so its colours are judged against neutral. */
+  --color-mat: var(--mat);
+  --color-shell: var(--shell);
+  --color-shell-raised: var(--shell-raised);
+  --color-shell-line: var(--shell-line);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --violet: #b664ff;
+  --indigo: #444ce7;
+  --indigo-soft: #7f86f1;
+  --shell: #141414;
+  --shell-raised: #1c1c1f;
+  --shell-line: #2e2e35;
+  --radius: 0px;
+
+  /* Light canvas: plain neutral greys, no hue. */
+  --background: #f2f2f2;
+  --foreground: #141414;
+  --card: #ffffff;
+  --card-foreground: #141414;
+  --popover: #ffffff;
+  --popover-foreground: #141414;
+  --primary: #444ce7;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e8e8;
+  --secondary-foreground: #141414;
+  --muted: #e8e8e8;
+  --muted-foreground: #5c5c5c;
+  --accent: #e8e8e8;
+  --accent-foreground: #141414;
+  --destructive: #c62828;
+  --border: #d6d6d6;
+  --input: #b8b8b8;
+  --ring: #444ce7;
+  --mint: #59fda0;
+  --mint-ink: #0a7a45;
+  --amber: #ffce3a;
+  --amber-ink: #7a5200;
+  --mat: #e2e2e2;
+}
+
+.dark,
+.shell {
+  --background: #141414;
+  --foreground: #f8fafc;
+  --card: #1c1c1f;
+  --card-foreground: #f8fafc;
+  --popover: #202024;
+  --popover-foreground: #f8fafc;
+  --primary: #5b63f0;
+  --primary-foreground: #ffffff;
+  --secondary: #26262b;
+  --secondary-foreground: #f8fafc;
+  --muted: #26262b;
+  --muted-foreground: #a9adba;
+  --accent: #2b2b31;
+  --accent-foreground: #f8fafc;
+  --destructive: #ff7a7a;
+  --border: #2e2e35;
+  --input: #4a4a55;
+  --ring: #7f86f1;
+  --mint-ink: #59fda0;
+  --amber-ink: #ffce3a;
+  --mat: #2b2b2b;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100dvh;
+    font-feature-settings: "ss01";
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--indigo) 35%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--indigo);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Every measured value (milliseconds, pixels, IDs, counts) is set in mono with aligned digits. */
+  .data {
+    @apply font-mono;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Small mono label used for field names and table heads. */
+  .label-mono {
+    @apply font-mono text-[11px] tracking-[0.08em] uppercase text-muted-foreground;
+  }
+
+  /*
+    The aurora field from the reference, used only on the login screen and the studies header:
+    soft colour over a faint perspective grid.
+  */
+  .aurora {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    background:
+      radial-gradient(60% 90% at 88% 20%, rgb(182 100 255 / 0.55), transparent 62%),
+      radial-gradient(45% 80% at 38% 110%, rgb(40 150 130 / 0.5), transparent 65%),
+      radial-gradient(40% 70% at 100% 105%, rgb(214 132 72 / 0.42), transparent 60%),
+      radial-gradient(70% 100% at 0% 0%, rgb(68 76 231 / 0.32), transparent 60%),
+      #17171d;
+  }
+
+  .aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgb(160 170 255 / 0.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(160 170 255 / 0.13) 1px, transparent 1px);
+    background-size: 72px 72px;
+    transform: perspective(900px) rotateX(58deg) scale(2.2);
+    transform-origin: 50% 0%;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  }
+
+  .prose-editor .tiptap {
+    @apply min-h-28 px-3 py-2.5 text-[15px] leading-relaxed outline-none;
+  }
+
+  .prose-editor .tiptap > * + * {
+    margin-top: 0.6em;
+  }
+
+  .prose-editor .tiptap h2 {
+    @apply text-lg font-medium;
+  }
+
+  .prose-editor .tiptap h3 {
+    @apply text-base font-medium;
+  }
+
+  .prose-editor .tiptap ul {
+    @apply list-disc pl-5;
+  }
+
+  .prose-editor .tiptap ol {
+    @apply list-decimal pl-5;
+  }
+
+  .prose-editor .tiptap p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

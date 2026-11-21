@@ -1,0 +1,67 @@
+# One EC2 instance: Caddy (HTTPS) -> app (FastAPI + both frontends) -> SeaweedFS (images).
+# Only Caddy is reachable from outside.
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_PATH: /data/glancelab.db
+      COOKIE_SECURE: "true"
+      # Defaults point at the bundled SeaweedFS. Set these in .env to use AWS S3 instead.
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL-http://seaweedfs:8333}
+      S3_BUCKET: ${S3_BUCKET:-glancelab}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID in .env}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY in .env}
+    volumes:
+      - app-data:/data
+    depends_on:
+      - seaweedfs
+    logging: &small-logs
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.07
+    restart: unless-stopped
+    environment:
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID in .env}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY in .env}
+    # The S3 credentials file is written at start so the keys live only in .env.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        printf '{"identities":[{"name":"glancelab","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' \
+          "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY" > /tmp/s3.json
+        exec weed -logtostderr=true -v=0 server -dir=/data -s3 -s3.config=/tmp/s3.json \
+          -master.volumeSizeLimitMB=1024 -volume.max=50
+    volumes:
+      - seaweedfs-data:/data
+    logging: *small-logs
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    logging: *small-logs
+
+volumes:
+  app-data:
+  seaweedfs-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T00:00:00Z",
+  "title": "Design System: GlanceLab Admin",
+  "extensions": {
+    "colorMeta": {
+      "indigo": { "role": "primary", "displayName": "Indigo", "canonical": "#444ce7", "tonalRamp": ["#0f1147", "#1a1e84", "#2a31b8", "#444ce7", "#6a71ee", "#9499f3", "#c1c4f8", "#e6e7fc"] },
+      "violet": { "role": "secondary", "displayName": "Violet", "canonical": "#b664ff", "tonalRamp": ["#2c0f4d", "#4b1a85", "#7a36c4", "#b664ff", "#c78aff", "#d9b0ff", "#ebd5ff", "#f6eeff"] },
+      "mint": { "role": "secondary", "displayName": "Live Mint", "canonical": "#59fda0", "tonalRamp": ["#04321b", "#0a7a45", "#14b866", "#59fda0", "#7dfdb4", "#a3fec8", "#cafedd", "#ecfff4"] },
+      "shell": { "role": "neutral", "displayName": "Shell Black", "canonical": "#141414", "tonalRamp": ["#0a0a0a", "#141414", "#1c1c1f", "#2e2e35", "#4a4a55", "#a9adba", "#d6d6d6", "#f2f2f2"] },
+      "mat-light": { "role": "neutral", "displayName": "Untinted Image Mat", "canonical": "#e2e2e2", "tonalRamp": ["#141414", "#2b2b2b", "#5c5c5c", "#b8b8b8", "#d6d6d6", "#e2e2e2", "#f2f2f2", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Login headline only, weight 300." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles, weight 300." },
+      "title": { "displayName": "Title", "purpose": "Section headings and empty states." },
+      "body": { "displayName": "Body", "purpose": "Reading text and field labels, always sans." },
+      "data": { "displayName": "Data", "purpose": "Measured values in mono with tabular digits." },
+      "label": { "displayName": "Label", "purpose": "Uppercase mono table heads and section labels." }
+    },
+    "shadows": [
+      { "name": "drag-lift", "value": "0 12px 32px -12px rgb(0 0 0 / 0.45)", "purpose": "Step card while being dragged. No shadows at rest." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Defined easing token." },
+      { "name": "button-transition", "value": "150ms on filter, background, color, border", "purpose": "Button state changes; reduced-motion collapses all durations to 0.01ms." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action on a screen, violet-to-indigo gradient.",
+      "html": "<button class=\"ds-btn-primary\">Publish</button>",
+      "css": ".ds-btn-primary { height: 36px; padding: 0 14px; border: 1px solid transparent; border-radius: 0; background: linear-gradient(45deg, #b664ff, #444ce7); color: #fff; font-family: 'Noto Sans Mono Variable', ui-monospace, monospace; font-size: 13px; font-weight: 500; cursor: pointer; transition: filter 150ms; } .ds-btn-primary:hover { filter: brightness(1.15); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #444ce7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Flat muted-fill button for ordinary actions.",
+      "html": "<button class=\"ds-btn-secondary\">Preview</button>",
+      "css": ".ds-btn-secondary { height: 36px; padding: 0 14px; border: 1px solid transparent; border-radius: 0; background: #e8e8e8; color: #141414; font-family: 'Noto Sans Mono Variable', ui-monospace, monospace; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color 150ms; } .ds-btn-secondary:hover { background: #dedede; } .ds-btn-secondary:focus-visible { outline: 2px solid #444ce7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Variant Tile",
+      "kind": "custom",
+      "refersTo": "variant-tile",
+      "description": "Solid colour square standing for one ad variant.",
+      "html": "<span class=\"ds-tile\">A</span><span class=\"ds-tile ds-tile-b\">B</span>",
+      "css": ".ds-tile { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-right: 6px; background: #444ce7; color: #fff; font-family: 'Noto Sans Mono Variable', ui-monospace, monospace; font-size: 13px; font-weight: 600; line-height: 1; } .ds-tile-b { background: #ffce3a; color: #141414; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "description": "Mono label with a square mark; filled mint means live.",
+      "html": "<span class=\"ds-status\"><i></i>Live</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; gap: 8px; font-family: 'Noto Sans Mono Variable', ui-monospace, monospace; font-size: 12px; } .ds-status i { width: 8px; height: 8px; background: #59fda0; }"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "description": "Always-dark 56px bar with gradient underline on the active link.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-on\" href=\"#\">Studies</a><a href=\"#\">Images</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav { display: flex; height: 56px; align-items: stretch; gap: 4px; padding: 0 24px; background: #141414; border-bottom: 1px solid #2e2e35; } .ds-nav a { position: relative; display: inline-flex; align-items: center; padding: 0 12px; color: #a9adba; font-size: 14px; text-decoration: none; transition: color 150ms; } .ds-nav a:hover { color: #f8fafc; } .ds-nav a.ds-nav-on { color: #f8fafc; } .ds-nav a.ds-nav-on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; background: linear-gradient(90deg, #b664ff, #444ce7); }"
+    },
+    {
+      "name": "Run-of-Show Row",
+      "kind": "custom",
+      "description": "Rail row: index, summary, duration, hairline between.",
+      "html": "<div class=\"ds-row\"><span>01</span><span class=\"ds-sum\">Consent</span><span>own pace</span></div><div class=\"ds-row\"><span>02</span><span class=\"ds-sum\">Show the ad</span><span>5.0 s</span></div>",
+      "css": ".ds-row { display: grid; grid-template-columns: 1.5rem 1fr auto; gap: 8px; align-items: baseline; padding: 8px 4px; border-bottom: 1px solid #d6d6d6; font-size: 14px; color: #141414; } .ds-row span:first-child, .ds-row span:last-child { font-family: 'Noto Sans Mono Variable', ui-monospace, monospace; font-size: 12px; font-variant-numeric: tabular-nums; } .ds-row:hover { background: #e8e8e8; }"
+    },
+    {
+      "name": "Image Slot",
+      "kind": "card",
+      "description": "Hue-free mat holding an ad image.",
+      "html": "<div class=\"ds-slot\"><div class=\"ds-mat\">Choose image</div></div>",
+      "css": ".ds-slot { border: 1px solid #d6d6d6; } .ds-mat { display: grid; place-items: center; aspect-ratio: 4 / 3; background: #e2e2e2; color: #5c5c5c; font-size: 14px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Run-of-Show",
+    "overview": "A study is a timed sequence, and the admin draws it that way: a numbered rail of steps with their durations, and each ad variant a solid flat colour square that follows it across every screen. The shell is a near-black frame with square corners and a monospace voice for anything measured; the canvas inside it is plain grey so that the ad images are the only colour that is not a brand signal.",
+    "keyCharacteristics": [
+      "Two themes of the canvas (light default, dark); the shell is dark in both.",
+      "Square corners everywhere; borders, not shadows, separate surfaces.",
+      "Light-weight grotesk headings, mono buttons and data.",
+      "Violet-to-indigo gradient marks the one primary action; mint means live or done.",
+      "Hue-free greys under every image."
+    ],
+    "rules": [
+      { "name": "The Hue-Free Canvas Rule", "body": "Canvas greys and the image mat carry no tint, in either theme. Ad colours must be judged against neutral. Never warm, cool or brand-tint them.", "section": "colors" },
+      { "name": "The Shell Is Always Dark Rule", "body": "Top bar, study bar, login and studies header are dark in both themes. Put them under .shell; do not hand-colour inside.", "section": "colors" },
+      { "name": "The One Gradient Rule", "body": "The violet-to-indigo gradient is for the primary action and the active-nav underline only. Mint is only for live or done.", "section": "colors" },
+      { "name": "The Measured-Value Rule", "body": "Anything measured is mono with tabular digits; anything a reader reads is sans.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Nothing casts a shadow at rest. Depth appears only while dragging or in overlays.", "section": "elevation" },
+      { "name": "The Aurora Boundary Rule", "body": "The aurora field appears only on the login screen and the studies header band.", "section": "elevation" },
+      { "name": "The Square Rule", "body": "No rounded corners, pills or circles on surfaces, buttons, tiles or badges.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep canvas, mats and image surrounds hue-free grey.",
+      "Do put new dark-bar surfaces inside `.shell`.",
+      "Do set every measured value in `.data`.",
+      "Do use the variant tile colour for a variant wherever it appears.",
+      "Do keep all radii at 0.",
+      "Do use mint only for live or done."
+    ],
+    "donts": [
+      "Don't put the aurora anywhere but the login screen and studies header band.",
+      "Don't tint the canvas or image mat \"to warm it up\".",
+      "Don't use more than one gradient button per screen.",
+      "Don't stack white rounded cards on lilac.",
+      "Don't load fonts or assets from a CDN."
+    ]
+  }
+}

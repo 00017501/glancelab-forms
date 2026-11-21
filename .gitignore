@@ -1,1 +1,25 @@
+# Secrets and local config
 .env
+.env.*
+!.env.example
+
+# Local data: SQLite file, object-storage volume
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+
+# Agent tooling, per machine
+.claude/worktrees/
+.claude/settings.local.json
+.impeccable/config.local.json
+
+.DS_Store

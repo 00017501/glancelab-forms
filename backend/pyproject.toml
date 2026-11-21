@@ -1,0 +1,46 @@
+[project]
+name = "glancelab"
+version = "0.1.0"
+description = "Ad-variant study app: form builder, participant runtime, anonymous export."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.20.1",
+    "boto3>=1.44.9",
+    "fastapi>=0.165.0",
+    "itsdangerous>=2.2.0",
+    "nh3>=0.3.8",
+    "pillow>=13.0.0",
+    "pydantic-settings>=2.16.3",
+    "python-multipart>=0.0.34",
+    "sqlmodel>=0.0.50",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "S", "T20", "SIM", "RUF", "PL", "C4", "PT"]
+# PLR0911: dispatching on a step type reads best as one return per type.
+ignore = ["PLR2004", "S101", "PLR0911"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S311", "PLR0913"]
+
+[tool.pyright]
+include = ["app", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
+]

@@ -1,0 +1,22 @@
+# Local development only: just the image store, reachable from the host.
+# Run the backend with uvicorn and the frontends with Vite (see README, "Local development").
+#
+#   docker compose -f docker-compose.dev.yml up -d
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.07
+    entrypoint:
+      - sh
+      - -c
+      - |
+        printf '{"identities":[{"name":"dev","credentials":[{"accessKey":"dev-access-key","secretKey":"dev-secret-key"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' > /tmp/s3.json
+        exec weed -logtostderr=true -v=0 server -dir=/data -s3 -s3.config=/tmp/s3.json \
+          -master.volumeSizeLimitMB=1024 -volume.max=50
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - seaweedfs-dev-data:/data
+
+volumes:
+  seaweedfs-dev-data:
