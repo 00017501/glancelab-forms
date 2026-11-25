@@ -1,176 +1,146 @@
+<div align="center">
+
 # GlanceLab
 
-A small web app for running ad-variant studies. You build a study in a Google-Forms-like editor, each participant sees one version of your ad for a fixed time, and you download an anonymous CSV of what they noticed, remembered, and how fast they found the price.
+**Run ad-variant studies from a form builder: a timed ad, an even random split, a "find the price" task, and an anonymous CSV at the end.**
 
-- **Admin panel** at `/admin`: one admin, set in `.env`.
-- **Participants** open a public link (`/s/…`) on a phone or laptop. No login.
+![The study editor](docs/images/03-editor.png)
 
-## What it does
+</div>
 
-| Step type | What the participant does | What is recorded |
-|---|---|---|
-| Consent | Reads the study information, ticks "I am 18 or older and I agree" | Consent time and text version |
-| Text screen | Reads, presses a button | Nothing |
-| Ad exposure | Sees their assigned ad version for N seconds; no pause, no going back | Actual time on screen (ms) |
-| Distractor | Does simple sums for N seconds | Sums attempted and correct |
-| Question | Multiple choice, dropdown, short answer, paragraph or 1–7 style scale | The answer |
-| Click on image | Clicks a spot on a picture | Click position (0–1), mouse or touch |
-| Timed search | Finds something ("Click the price as fast as you can") | Reaction time (ms), click position, hit or miss |
+## About
 
-Participants are assigned to ad versions at random and the versions are kept even. Refreshing the page never shows the ad a second time; that response is marked `interrupted`.
+GlanceLab is a small web app built for a university neuromarketing study. The study asks one question: **does the position of a promo price in a static ad change whether people notice it, remember it and find it quickly?**
+
+A researcher builds the study in an editor that works like Google Forms. Each participant opens a public link on a phone or laptop, with no login, and is shown **one** version of the ad for a fixed time. The researcher downloads one anonymous CSV row per participant.
+
+## Features
+
+- **Form builder** with seven step types: consent, text, ad exposure, distractor, question, click on image and timed search.
+- **Balanced random assignment.** Each participant gets one ad version, and the versions are kept even.
+- **Timed search.** Records the reaction time, the click position and whether the click landed in the target box you drew.
+- **Shown once.** Refreshing or pressing Back never shows the ad again; that response is marked `interrupted`.
+- **Preview, publish, share.** Try any version first, then share a link and QR code. After publishing, only wording can change.
+- **Anonymous CSV** with a column guide that explains every column.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/10-target-box.png" alt="Drawing the target box for a timed search"></td>
+<td width="50%"><img src="docs/images/18-responses.png" alt="The responses tab"></td>
+</tr>
+<tr>
+<td align="center">Drawing the target box for a timed search</td>
+<td align="center">Responses, with a live count per version</td>
+</tr>
+</table>
+
+<div align="center">
+<img src="docs/images/14-phone-ad.png" width="180" alt="The ad on a phone, shown for a fixed time">
+&nbsp;&nbsp;
+<img src="docs/images/17-phone-search.png" width="180" alt="Timed search on a phone">
+<br>
+<sub>What participants see: the timed ad, then the search task</sub>
+</div>
+
+Every screen is in the [feature tour](docs/features.md).
+
+## How it works
+
+```mermaid
+flowchart LR
+    R([Researcher]) -->|/admin| C
+    P([Participant]) -->|/s/link| C
+    C[Caddy<br>HTTPS, no access log] --> A[FastAPI app<br>serves the API and both frontends]
+    A --> D[(SQLite)]
+    A --> S[(SeaweedFS or AWS S3<br>images)]
+```
+
+One container runs the API and serves both built frontends. Caddy sits in front for HTTPS. Images live in S3-compatible storage and are streamed through the app, so a participant's browser only ever talks to one origin.
+
+A participant's run goes like this:
+
+```mermaid
+flowchart LR
+    L[Open link] --> K[Consent]
+    K -->|agrees| V[Assigned one<br>ad version]
+    K -.->|declines| X[Nothing stored]
+    V --> E[Timed ad]
+    E --> M[Distractor<br>and questions]
+    M --> T[Timed search]
+    T --> F[One anonymous<br>CSV row]
+```
+
+More detail, including the data model, is in [Architecture](docs/architecture.md).
 
 ## Privacy
 
-These are built in:
+- **No IP address** is stored or logged, by the app, uvicorn or Caddy.
+- **No third parties.** Participant pages load everything from this server.
+- **Nothing before consent.** "Leave study" deletes that person's data immediately.
+- **Anonymous results.** A response carries only a random ID.
 
-- No IP address is stored or logged, by the app, uvicorn or Caddy.
-- Participant pages load nothing from other websites.
-- Nothing is saved before consent. "Leave study" deletes that person's data immediately.
-- Responses carry only a random ID. The CSV contains nothing identifying.
-- The admin can delete one response, all responses of a study, or everything.
-
-To check the first promise on your own server at any time:
-
-```bash
-docker compose logs | grep -E '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -v -e '0.0.0.0' -e '127.0.0.1' -e ' 172\.' -e ' 10\.'
-```
-
-It should print nothing that looks like a visitor's address.
-
-## Deploy on one AWS EC2 instance
-
-You need: an AWS account and a domain (or subdomain) whose DNS you can edit.
-
-### 1. Create the server
-
-1. Launch an EC2 instance: **Ubuntu 24.04**, `t3.small` or larger, 20 GB disk.
-2. Security group: allow inbound **22** (SSH, your IP only), **80** and **443** (anywhere). Nothing else.
-3. Allocate an **Elastic IP** and attach it to the instance, so the address survives restarts.
-
-### 2. Point your domain at it
-
-Create a DNS **A record** for your domain (for example `study.example.com`) with the Elastic IP as its value. Wait until `ping study.example.com` shows that IP.
-
-### 3. Install Docker
-
-SSH in, then:
-
-```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-exit
-```
-
-SSH in again so the group change applies.
-
-### 4. Get the code and configure it
-
-```bash
-git clone <your repository URL> glancelab
-cd glancelab
-cp .env.example .env
-nano .env
-```
-
-Fill in `.env`:
-
-| Variable | Value |
-|---|---|
-| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | The admin login. Use a long password. |
-| `SECRET_KEY` | Output of `openssl rand -hex 32` |
-| `DOMAIN` | Your domain, without `https://` |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Output of `openssl rand -hex 16`, one each |
-
-### 5. Start it
-
-```bash
-docker compose up -d --build
-```
-
-The first start takes a few minutes. Then open `https://your-domain/admin` and log in. Caddy gets the HTTPS certificate by itself; the first page load can take up to a minute while it does.
-
-### Day-to-day
-
-```bash
-docker compose ps                 # is everything running?
-docker compose logs -f app        # application log (contains no IP addresses)
-git pull && docker compose up -d --build   # update to a new version
-docker compose down               # stop (data is kept)
-```
-
-### Back up the data
-
-The database and images live in Docker volumes. To copy the database out:
-
-```bash
-docker compose cp app:/data/glancelab.db ./glancelab-backup.db
-```
-
-Downloading the CSV from the admin panel is the simplest backup of responses.
-
-### When the coursework is graded
-
-In the admin panel: **Settings → Delete all data**. To remove everything from the server as well:
-
-```bash
-docker compose down --volumes
-```
-
-## Using AWS S3 for images
-
-By default images are stored by the SeaweedFS container, on the EC2 disk. Images are resized on upload, so a study with a few dozen ads uses a few tens of megabytes, and the Images page shows the total.
-
-To keep images off the instance entirely:
-
-1. Create a private S3 bucket.
-2. Create an IAM user allowed `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` and `s3:ListBucket` on that bucket.
-3. In `.env`: put the bucket name in `S3_BUCKET`, the user's keys in `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`, and uncomment `S3_ENDPOINT_URL=` (left empty) and `S3_REGION=…`.
-4. `docker compose up -d`. The SeaweedFS container still starts but is no longer used.
-
-Existing images are not moved; switch before uploading, or re-upload.
+How each one is enforced: [docs/privacy.md](docs/privacy.md).
 
 ## Local development
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), Node 22 or newer.
+You need Docker and [just](https://github.com/casey/just). One command builds and starts everything:
 
 ```bash
-# 1. Image store
-docker compose -f docker-compose.dev.yml up -d
-
-# 2. Backend (in backend/)
-export ADMIN_USERNAME=researcher ADMIN_PASSWORD=local-dev-password
-export SECRET_KEY=$(openssl rand -hex 32) COOKIE_SECURE=false
-export S3_ENDPOINT_URL=http://127.0.0.1:8333 S3_ACCESS_KEY_ID=dev-access-key S3_SECRET_ACCESS_KEY=dev-secret-key
-uv sync
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --no-access-log
-
-# 3. Admin (in frontend/admin/) on http://localhost:5173/admin/
-npm install && npm run dev
-
-# 4. Participant app (in frontend/participant/)
-npm install && npm run build      # then open study links through the backend, http://localhost:8000/s/…
+just up
 ```
 
-To have the backend serve both built frontends, as in production, build them and set `STATIC_DIR` to a folder containing `admin/` and `participant/` (the two `dist` folders).
+| Part | Where |
+|---|---|
+| Admin panel, with hot reload | <http://localhost:5173/admin/> |
+| Participant app, rebuilt on every change | study links, `http://localhost:5173/s/…` |
+| Backend API | <http://localhost:8000> |
 
-### Checks
+Log in with `researcher` and `local-dev-password`. The first build takes a few minutes.
 
 ```bash
-# backend/
-uv run pytest && uv run ruff check . && uv run ruff format --check . && uv run pyright
-
-# frontend/admin and frontend/participant
-npm run typecheck && npm run lint && npm run build
-npm test            # participant only
+just down           # stop, data is kept
+just logs backend   # follow a service's logs
+just check          # every test, lint and type check
+just                # list all commands
 ```
 
-## The CSV
+The stack is defined in [`docker/compose/local.yml`](docker/compose/local.yml). The admin panel and the participant app are Compose profiles, so each can be started on its own with `just up-admin` or `just up-participant`. Without `just`:
 
-One row per participant. Fixed columns come first (`participant_id`, `variant`, `status`, `interrupted`, device and timing columns), then columns per step named by position: `s03_stimulus_shown_ms`, `s05_answer`, `s09_search_rt_ms`, and so on. The numbers match the step numbers in the editor. **Column guide** on the Responses tab downloads a second CSV that explains every column and lists each question's wording.
+```bash
+docker compose -f docker/compose/local.yml --profile admin --profile participant up -d --build
+```
 
-Rows with `interrupted = 1` reloaded the page during a timed step; consider leaving them out. Rows with `status = partial` did not reach the end.
+More in [Development](docs/development.md).
 
-## Project layout
+## Deploying
 
-See [AGENTS.md](AGENTS.md).
+On a server with Docker and a domain that points at it:
+
+```bash
+git clone <repository URL> glancelab && cd glancelab
+cp .env.example .env        # then fill it in; the file explains each value
+docker compose up -d --build
+```
+
+Then open `https://<your domain>/admin`. Caddy gets the HTTPS certificate by itself. The full walkthrough, with backups and AWS S3, is in [Deployment](docs/deployment.md).
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [Feature tour](docs/features.md) | Every screen of the admin panel and the participant flow |
+| [Architecture](docs/architecture.md) | Components, data model, assignment, the shown-once rule |
+| [API reference](docs/api.md) | Admin and participant endpoints, error format |
+| [Results and CSV](docs/data-export.md) | Every CSV column and how to filter rows for analysis |
+| [Privacy](docs/privacy.md) | What is collected and how the promises are kept |
+| [Deployment](docs/deployment.md) | One EC2 instance step by step, configuration, backups |
+| [Development](docs/development.md) | Local setup, checks, adding a step type |
+
+## Tech stack
+
+| Part | Built with |
+|---|---|
+| Backend | Python 3.12, FastAPI, SQLModel, Alembic, SQLite |
+| Admin panel | React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Participant app | TypeScript, Vite, jsPsych 8, fully self-hosted |
+| Deployment | Docker Compose, Caddy, SeaweedFS or AWS S3 for images |
