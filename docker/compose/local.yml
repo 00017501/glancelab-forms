@@ -1,0 +1,99 @@
+name: glancelab
+
+# Local development only. Everything runs in containers; nothing is installed on the host.
+#
+#   just up        (or: docker compose -f docker/compose/local.yml --profile admin --profile participant up -d --build)
+#
+# Always started:        seaweedfs (images) and backend (API with auto-reload, http://localhost:8000)
+# --profile admin        the admin panel with hot reload, http://localhost:5173/admin/
+# --profile participant  the participant app, rebuilt on every change and served by the backend at /s/<link>
+#
+# Dependencies are installed when the images are built. After changing pyproject.toml or a
+# package.json, build again (`just up` does).
+#
+# The login is researcher / local-dev-password. Every value below is for local use only.
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.07
+    entrypoint:
+      - sh
+      - -c
+      - |
+        printf '{"identities":[{"name":"dev","credentials":[{"accessKey":"dev-access-key","secretKey":"dev-secret-key"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' > /tmp/s3.json
+        exec weed -logtostderr=true -v=0 server -dir=/data -s3 -s3.config=/tmp/s3.json \
+          -master.volumeSizeLimitMB=1024 -volume.max=50
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - seaweedfs-dev-data:/data
+
+  backend:
+    build:
+      context: ../../
+      dockerfile: docker/images/local/backend.Dockerfile
+    working_dir: /app
+    # No access log: request lines would contain client IP addresses.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "app", "--no-access-log"]
+    environment:
+      ADMIN_USERNAME: researcher
+      ADMIN_PASSWORD: local-dev-password
+      SECRET_KEY: local-development-only-secret-key-not-for-production
+      # Plain HTTP on localhost, so the login cookie cannot carry the Secure flag.
+      COOKIE_SECURE: "false"
+      DATABASE_PATH: /data/glancelab.db
+      STATIC_DIR: /static
+      S3_ENDPOINT_URL: http://seaweedfs:8333
+      S3_ACCESS_KEY_ID: dev-access-key
+      S3_SECRET_ACCESS_KEY: dev-secret-key
+      # File-change events do not always cross from the host into the container, so the reloader polls.
+      WATCHFILES_FORCE_POLLING: "true"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../../backend:/app
+      - backend-dev-data:/data
+      - participant-dev-dist:/static/participant
+    depends_on:
+      - seaweedfs
+
+  admin:
+    profiles: [admin]
+    build:
+      context: ../../
+      dockerfile: docker/images/local/frontend.Dockerfile
+      args:
+        APP: admin
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    environment:
+      BACKEND_URL: http://backend:8000
+      WATCH_POLLING: "true"
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ../../frontend/admin/src:/app/src
+      - ../../frontend/admin/index.html:/app/index.html
+      - ../../frontend/admin/vite.config.ts:/app/vite.config.ts
+    depends_on:
+      - backend
+
+  participant:
+    profiles: [participant]
+    build:
+      context: ../../
+      dockerfile: docker/images/local/frontend.Dockerfile
+      args:
+        APP: participant
+    # Lets the rebuild loop stop at once on `down`.
+    init: true
+    command: ["/participant-watch.sh"]
+    volumes:
+      - ../../frontend/participant/src:/app/src
+      - ../../frontend/participant/index.html:/app/index.html
+      - ../../frontend/participant/vite.config.ts:/app/vite.config.ts
+      - participant-dev-dist:/app/dist
+
+volumes:
+  seaweedfs-dev-data:
+  backend-dev-data:
+  participant-dev-dist:

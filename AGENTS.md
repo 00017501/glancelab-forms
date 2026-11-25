@@ -27,7 +27,9 @@ frontend/
   admin/                Vite + React + TypeScript + Tailwind + shadcn/ui + dnd-kit
   participant/          Vite + TypeScript + jsPsych, fully self-hosted
 docs/adr/               architecture decision records
-docker-compose.yml      app, seaweedfs, caddy
+docker/                 local development stack: compose/, images/, scripts/
+justfile                local commands (`just up`, `just check`)
+docker-compose.yml      production: app, seaweedfs, caddy
 Caddyfile
 ```
 
@@ -50,7 +52,11 @@ npm run lint
 npm run typecheck
 npm test
 
-# Everything
+# Whole local stack in Docker (see docs/development.md)
+just up
+just check
+
+# Production stack
 docker compose up --build
 ```
 
